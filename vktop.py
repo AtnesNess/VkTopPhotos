@@ -1,4 +1,5 @@
 import vk
+import myvk
 import argparse
 import webbrowser
 import socket
@@ -11,10 +12,9 @@ global to_date
 CURSOR_UP_ONE = '\x1b[1A'
 ERASE_LINE = '\x1b[2K'
 
-def authenticate(login, passw):
+def authenticate():
     print 'Authentication...'
-    vkapi = vk.API('4927742', login, passw)
-    vkapi.friends.get()
+
     sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(('localhost', 8003))
@@ -34,7 +34,7 @@ def authenticate(login, passw):
 
         <body>
             <h3> Auth OK </h3>
-            <div id="loc"> 123</div>
+
             <script> window.location = (window.location.toString().replace("#", "?"));  window.location.close();</script>
         </body>
     </html>
@@ -54,7 +54,7 @@ def authenticate(login, passw):
     </html>
 
         """
-
+        appID = 4927742
         conn.send(message)
         conn, addr = sock.accept()
         data =  conn.recv(3048)
@@ -63,7 +63,8 @@ def authenticate(login, passw):
         token = regexped.group(1)
         print "token={}".format(token)
 
-        vkapi.access_token = token
+        # vkapi.access_token = token
+        vkapi = myvk.Api(token, appID)
         print 'Authenticated'
 
     finally:
@@ -73,11 +74,10 @@ def authenticate(login, passw):
 
 
 def getLikesOfPhoto(photo, vkapi):
-    try:
         time.sleep(0.3)
-        return vkapi.likes.getList(type="photo", item_id=photo['id'])['count']
-    except Exception:
-        return getLikesOfPhoto(photo, vkapi)
+
+        return vkapi.likes.getList(type="photo", item_id=int(photo['id']))['count']
+
 
 
 def getMaxResolution(photo):
@@ -167,7 +167,7 @@ def generateTopHTML(top10, vkapi):
     images = ""
     for top in top10:
         time.sleep(0.3)
-        images += "<div><img src='{}'> </img> Likes: {}</div> ".format(top['link'], top['likes'])
+        images += "<div><img src='{}' width=400> </img> Likes: {}</div> ".format(top['link'], top['likes'])
     message = message.format(images)
     print message
     sock.listen(10)
@@ -189,7 +189,7 @@ def getProgressBar(now, maximum):
     return progres_bar
 
 def main(args):
-    vkapi = authenticate(args.Login, args.Password)
+    vkapi = authenticate()
     if args.period:
         globals()['from_date'] = time.strptime(args.period[0], '%d.%m.%Y')
         globals()['to_date'] = time.strptime(args.period[1], '%d.%m.%Y')
@@ -213,12 +213,11 @@ def main(args):
             print "Getting photos..."
             print
             while i < count:
+
                 print CURSOR_UP_ONE + ERASE_LINE + getProgressBar(i, count)
-                try:
-                    photos += vkapi.photos.getAll(offset=i, owner_id=args.user, extended=1)['items']
-                except Exception as e:
-                    print e
-                    continue
+
+                photos += vkapi.photos.getAll(offset=i, owner_id=args.user, count=20, extended=1)['items']
+
                 i += 20
                 time.sleep(0.3)
         else:
@@ -227,11 +226,8 @@ def main(args):
             print
             while i < count:
                 print CURSOR_UP_ONE + ERASE_LINE + getProgressBar(i, count)
-                try:
-                    photos += vkapi.photos.getAll(offset=i, extended=1)['items']
-                except Exception as e:
-                    print e
-                    continue
+
+                photos += vkapi.photos.getAll(offset=i, count=20, extended=1)['items']
                 i += 20
                 time.sleep(0.3)
         print CURSOR_UP_ONE + ERASE_LINE + getProgressBar(1, 1)
@@ -253,8 +249,8 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("VK TOP photos ")
-    parser.add_argument("Login")
-    parser.add_argument("Password")
+    # parser.add_argument("Login")
+    # parser.add_argument("Password")
     parser.add_argument("-u", "--user"  )
     parser.add_argument("-p", "--period",  nargs=2, help="example: 22.11.2014 20.05.2015")
     parser.add_argument("-a", "--albums",  help="only albums", action="store_true")
