@@ -3,17 +3,6 @@ import json
 API_TEMPLATE = "https://api.vk.com/method/{}.{}?{}&access_token={}"
 
 
-class Photos():
-    def __init__(self, token):
-        self.token = token
-        self.template = API_TEMPLATE.format("photos", "{}", "{}", "{}")
-
-    def __getattr__(self, name):
-        def wrapper(*args, **kwargs):
-            print "'%s' was called" % name
-        return wrapper
-
-
 class VKMethod():
     def __init__(self, method, token):
         self.method = method
