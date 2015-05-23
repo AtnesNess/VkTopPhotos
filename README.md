@@ -1,11 +1,6 @@
 # VkTopPhotos
 -------
-usage: VK TOP photos  [-h] [-u USER] [-p PERIOD PERIOD] [-a] Login Password
-
-positional arguments:
--
-* Login
-* Password
+usage: VK TOP photos  [-h] [-u USER] [-p PERIOD PERIOD] [-a]
 
 optional arguments:
 -
